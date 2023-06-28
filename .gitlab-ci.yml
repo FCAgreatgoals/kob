@@ -1,0 +1,33 @@
+image: node:latest
+
+stages:
+    - install
+    - build
+    - publish
+
+cache:
+    paths:
+        - node_modules/
+
+variables:
+    NPM_TOKEN: $NPM_TOKEN
+
+before_script:
+    - echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+
+install_dependencies:
+    stage: install
+    script:
+        - npm ci
+
+build:
+    stage: build
+    script:
+        - npm run build
+
+publish_to_npm:
+    stage: publish
+    only:
+        - master
+    script:
+        - npm publish

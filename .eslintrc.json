@@ -1,0 +1,25 @@
+{
+    "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended"
+    ],
+    "env": {
+        "node": true,
+        "es2022": true
+    },
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "sourceType": "module",
+        "ecmaVersion": 13
+    },
+    "ignorePatterns": ["node_modules/**", "dist/**"],
+    "rules": {
+        "semi": ["error", "never"],
+        "quotes": ["error", "single"],
+        "max-classes-per-file": ["error", 1],
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/ban-ts-comment": "off",
+        "@typescript-eslint/no-inferrable-types": "off",
+        "no-async-promise-executor": "off"
+    }
+}
