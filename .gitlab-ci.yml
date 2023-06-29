@@ -10,6 +10,12 @@ cache:
     paths:
         - node_modules/
 
+variables:
+    NPM_TOKEN: $NPM_TOKEN
+
+before_script:
+    - echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+
 install:
     stage: install
     script:
@@ -30,11 +36,12 @@ build:
 
 publish:
     stage: publish
+    only:
+        - main
     needs:
         - job: build
           artifacts: true
     dependencies:
         - build
     script:
-        - npm config set -- '//registry.npmjs.org/:_authToken' "${NPM_TOKEN}"
         - npm publish --access public
