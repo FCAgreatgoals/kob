@@ -23,7 +23,7 @@ install_dependencies:
 build:
     stage: build
     script:
-        - npm run build
+        - npm run prod-build
     artifacts:
         paths:
             - ./lib/

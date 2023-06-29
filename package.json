@@ -5,9 +5,10 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "clean": "rm -rf dist/",
+    "clean": "rm -rf lib/",
     "dev": "npm run clean && tsc && concurrently -k -n \"Typescript,Node\" -p \"[{name}]\" -c \"blue,green\" \"tsc --watch\" \"nodemon --inspect dist/index.js\"",
     "build": "npm run clean && tsc",
+    "prod-build": "tsc",
     "start": "node dist/index.js"
   },
   "dependencies": {
