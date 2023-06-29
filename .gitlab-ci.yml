@@ -24,6 +24,9 @@ build:
     stage: build
     script:
         - npm run build
+    artifacts:
+        paths:
+            - ./lib/
 
 publish_to_npm:
     stage: publish
