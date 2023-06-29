@@ -1,7 +1,7 @@
 import Emitter from 'node:events'
 import Context from './Context'
 import Debug from 'debug'
-import onFinished from 'on-finished' // TODO
+import onFinished from 'on-finished'
 import HttpStatus from './HttpStatus'
 import util from 'node:util'
 import Stream from 'node:stream'

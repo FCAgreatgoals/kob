@@ -9,7 +9,9 @@
         "strict": true,
         "outDir": "./lib",
         "declaration": true,
-        "removeComments": true
+        "removeComments": true,
+        "sourceMap": true,
+        "declarationMap": true
     },
     "include": [
         "src/**/*"

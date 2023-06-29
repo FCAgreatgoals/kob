@@ -1,4 +1,3 @@
-
 export const httpCode = {
 	100: 'Continue',
 	101: 'Switching Protocols',
