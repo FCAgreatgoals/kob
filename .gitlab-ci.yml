@@ -1,4 +1,4 @@
-image: node:latest
+image: node:lts-alpine
 
 stages:
     - install
@@ -6,31 +6,32 @@ stages:
     - publish
 
 cache:
+    key: ${CI_COMMIT_REF_SLUG}
     paths:
         - node_modules/
 
-variables:
-    NPM_TOKEN: $NPM_TOKEN
-
-before_script:
-    - echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-
-install_dependencies:
+install:
     stage: install
     script:
         - npm ci
 
 build:
     stage: build
+    dependencies:
+        - install
     script:
         - npm run prod-build
     artifacts:
         paths:
-            - ./lib/
+            - lib
 
-publish_to_npm:
+publish:
     stage: publish
-    only:
-        - main
+    needs:
+        - job: build
+          artifacts: true
+    dependencies:
+        - build
     script:
-        - npm publish
+        - npm config set -- '//registry.npmjs.org/:_authToken' "${NPM_TOKEN}"
+        - npm publish --access public
