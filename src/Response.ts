@@ -12,13 +12,11 @@ import contentDisposition from 'content-disposition'
 import onFinished from 'on-finished'
 import EventEmitter from 'events'
 import { ReadStream } from 'fs'
-import Cookies from 'cookies'
 
 export default class Response extends Base {
 
 	private readonly rawResponse: ServerResponse
 	private body: Body
-	private cookies: Cookies
 	private _explicitNullBody: boolean
 
 	constructor(context: Context, rawResponse: ServerResponse) {
@@ -26,10 +24,6 @@ export default class Response extends Base {
 
 		this.rawResponse = rawResponse
 
-		this.cookies = new Cookies(this.getContext().getRequest().getRawRequest(), this.rawResponse, {
-			keys: this.getKob().getCookiesKeys(),
-			secure: this.getContext().getRequest().isSecure()
-		})
 		this.body = null
 		this._explicitNullBody = false
 	}
@@ -180,7 +174,7 @@ export default class Response extends Base {
 				.removeHeader('Content-Length')
 				.removeHeader('Transfer-Encoding')
 
-      		return this
+			return this
 		}
 
 		if (!this.getStatus()) {
@@ -221,7 +215,7 @@ export default class Response extends Base {
 			if (!this.hasHeader('Content-Type')) {
 				this.setType('bin')
 			}
-			
+
 			return this
 		}
 
@@ -230,20 +224,10 @@ export default class Response extends Base {
 		return this
 	}
 
-	public getCookies(): Cookies {
-		return this.cookies
-	}
-
-	public setCookies(cookies: Cookies): this {
-		this.cookies = cookies
-
-		return this
-	}
-
 	public getType(): string {
 		const type = this.getHeader('Content-Type')
-    	if (!type) return ''
-    	return type.split(';', 1)[0]
+		if (!type) return ''
+		return type.split(';', 1)[0]
 	}
 
 	public setType(type: string): this {
@@ -343,7 +327,7 @@ function destroyStream(stream: object, suppress: Error | null) {
 
   if (stream instanceof EventEmitter && suppress) {
     stream.removeAllListeners('error')
-    stream.addListener('error', () => {})
+    stream.addListener('error', () => undefined)
   }
 
   return stream
