@@ -28,6 +28,6 @@ build:
 publish_to_npm:
     stage: publish
     only:
-        - master
+        - main
     script:
         - npm publish
