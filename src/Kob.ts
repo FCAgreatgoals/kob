@@ -25,9 +25,9 @@ export default class Kob extends Emitter {
             silent: false
         }
 
-        this.server = http.createServer(this.callback())
         this.options = {...defaultOptions, ...options}
         this.middlewares = []
+        this.server = http.createServer(this.callback())
     }
 
     public getOption<T extends keyof KobOptions>(name: T): KobOptions[T] {
@@ -71,8 +71,8 @@ export default class Kob extends Emitter {
     }
 
     private composeMiddlewares(): Middleware {
-        if (!Array.isArray(this.middlewares))
-            throw new TypeError('Middleware stack must be an array!')
+        if (!Array.isArray(this.middlewares)) throw new TypeError('Middleware stack must be an array!')
+
         for (const fn of this.middlewares) {
             if (typeof fn !== 'function')
                 throw new TypeError(
