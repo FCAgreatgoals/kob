@@ -11,55 +11,31 @@ const debug = Debug('kob:application')
 
 export default class Kob extends Emitter {
 
-    private readonly proxy: boolean
-    private readonly subdomainOffset: number
-    private readonly proxyIpHeader: string
-    private readonly maxIpsCount: number
-    private readonly silent: boolean
-    private readonly keys: string[] | undefined
+    private readonly server: Server
+    private readonly options: KobOptions
     private readonly middlewares: Array<Middleware>
 
-    constructor(options?: KobOptions) {
+    constructor(options?: Partial<KobOptions>) {
         super()
-        options = options || {}
-        this.proxy = options.proxy || false
-        this.subdomainOffset = options.subdomainOffset || 2
-        this.proxyIpHeader = options.proxyIpHeader || 'X-Forwarded-For'
-        this.maxIpsCount = options.maxIpsCount || 0
-        this.silent = options.silent || false
-
-        if (options.keys) {
-            this.keys = options.keys
+        const defaultOptions: KobOptions = {
+            proxy: false,
+            subdomainOffset: 2,
+            proxyIpHeader: 'X-Forwarded-For',
+            maxIpsCount: 0,
+            silent: false
         }
 
+        this.server = http.createServer(this.callback())
+        this.options = {...defaultOptions, ...options}
         this.middlewares = []
     }
 
-    public getProxy(): boolean {
-        return this.proxy
+    public getOption<T extends keyof KobOptions>(name: T): KobOptions[T] {
+        return this.options[name]
     }
 
-    public getProxyIpHeader(): string {
-        return this.proxyIpHeader
-    }
-
-    public getMaxIpsCount(): number {
-        return this.maxIpsCount
-    }
-
-    public getSubdomainOffset(): number {
-        return this.subdomainOffset
-    }
-
-    public getCookiesKeys(): string[] | undefined {
-        return this.keys
-    }
-
-    public listen(...args: Array<any>): Server<typeof IncomingMessage, typeof ServerResponse> {
-        debug('listen')
-
-        const server = http.createServer(this.callback())
-        return server.listen(...args)
+    public getServer(): Server {
+        return this.server
     }
 
     public use(fn: Middleware): this {
@@ -72,6 +48,26 @@ export default class Kob extends Emitter {
         this.middlewares.push(fn)
 
         return this
+    }
+
+    public listen(...args: Array<any>): Server<typeof IncomingMessage, typeof ServerResponse> {
+        debug('listen')
+
+        return this.server.listen(...args)
+    }
+
+    private callback(): RequestListener<typeof IncomingMessage, typeof ServerResponse> {
+        const fn = this.composeMiddlewares()
+
+        if (!this.listenerCount('error')) {
+            this.on('error', this.onError)
+        }
+
+        return (req: IncomingMessage, res: ServerResponse) => {
+            const ctx = new Context(this, req, res)
+
+            return this.handleRequest(ctx, fn)
+        }
     }
 
     private composeMiddlewares(): Middleware {
@@ -115,20 +111,6 @@ export default class Kob extends Emitter {
         }
     }
 
-    public callback(): RequestListener<typeof IncomingMessage, typeof ServerResponse> {
-        const fn = this.composeMiddlewares()
-
-        if (!this.listenerCount('error')) {
-            this.on('error', this.onError)
-        }
-
-        return (req: IncomingMessage, res: ServerResponse) => {
-            const ctx = new Context(this, req, res)
-
-            return this.handleRequest(ctx, fn)
-        }
-    }
-
     private handleRequest(ctx: Context, fnMiddleware: Middleware) {
         const res = ctx.getResponse()
 
@@ -151,7 +133,7 @@ export default class Kob extends Emitter {
             throw new TypeError(util.format('non-error thrown: %j', err))
 
         if (err.status === 404 || err.expose) return
-        if (this.silent) return
+        if (this.getOption('silent')) return
 
         const msg = err.stack || err.toString()
         console.error(`\n${msg.replace(/^/gm, '  ')}\n`)

@@ -2,13 +2,12 @@ import { Stream } from 'stream'
 import Context from './Context'
 
 export type KobOptions = {
-    keys?: Array<string>,
-    proxy?: boolean,
-    subdomainOffset?: number,
-    proxyIpHeader?: string,
-    maxIpsCount?: number,
-	silent?: boolean
-};
+    proxy: boolean,
+    subdomainOffset: number,
+    proxyIpHeader: string,
+    maxIpsCount: number,
+	silent: boolean
+}
 
 export type Middleware = (context: Context, next: () => Promise<any>) => Promise<any | void>
 

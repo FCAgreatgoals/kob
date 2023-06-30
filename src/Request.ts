@@ -59,7 +59,7 @@ export default class Request extends Base {
 			return 'https'
 		}
 
-		if (!this.getKob().getProxy()) {
+		if (!this.getKob().getOption('proxy')) {
 			return 'http'
 		}
 
@@ -72,7 +72,7 @@ export default class Request extends Base {
 	}
 
 	public getHost(): string {
-		let host = this.getKob().getProxy() && this.getHeader('X-Forwarded-Host')
+		let host = this.getKob().getOption('proxy') && this.getHeader('X-Forwarded-Host')
 
 		if (!host) {
 			if (this.rawRequest.httpVersionMajor >= 2) host = this.getHeader(':authority')
@@ -156,13 +156,13 @@ export default class Request extends Base {
 	}
 
 	public getIps(): Array<string> {
-		const val = this.getHeader(this.getKob().getProxyIpHeader())
-		let ips = this.getKob().getProxy() && val
+		const val = this.getHeader(this.getKob().getOption('proxyIpHeader'))
+		let ips = this.getKob().getOption('proxy') && val
 			? val.split(/\s*,\s*/)
 			: []
 
-		if (this.getKob().getMaxIpsCount() > 0) {
-			ips = ips.slice(-this.getKob().getMaxIpsCount())
+		if (this.getKob().getOption('maxIpsCount') > 0) {
+			ips = ips.slice(-this.getKob().getOption('maxIpsCount'))
 		}
 
 		return ips
@@ -180,7 +180,7 @@ export default class Request extends Base {
 		return hostname
 			.split('.')
 			.reverse()
-			.slice(this.getKob().getSubdomainOffset())
+			.slice(this.getKob().getOption('subdomainOffset'))
 	}
 
 	public getType(): string {
