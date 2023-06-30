@@ -1,6 +1,6 @@
 {
   "name": "@fca.gg/kob",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "HTTP Library for Node.JS",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
