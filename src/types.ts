@@ -23,7 +23,7 @@ export enum HttpMethod {
 	PATCH = 'PATCH'
 }
 
-export type Body = string | object | Stream | null
+export type Body = string | { [key: string]: any } | Stream | null
 
 export type FileOptions = {
 	type?: 'attachment' | 'inline' | string | undefined,
