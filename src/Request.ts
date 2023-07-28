@@ -1,5 +1,5 @@
 import { IncomingMessage } from 'node:http'
-import { HttpMethod } from './types'
+import { Body, HttpMethod } from './types'
 import { Socket, isIP } from 'node:net'
 import Base from './Base'
 import Context from './Context'
@@ -13,17 +13,57 @@ import fresh from 'fresh'
 export default class Request extends Base {
 
 	private readonly rawRequest: IncomingMessage
+	private body: Body | null
 	private readonly _accept: Accepts
 
 	constructor(context: Context, rawRequest: IncomingMessage) {
 		super(context)
 
 		this.rawRequest = rawRequest
+		this.body = null
 		this._accept = accepts(this.rawRequest)
 	}
 
 	public getRawRequest(): IncomingMessage {
 		return this.rawRequest
+	}
+
+	public async getBody(): Promise<Body> {
+		if (this.body === null) {
+			return new Promise((resolve) => {
+				const bodyParts: Array<any> = []
+
+				this.rawRequest
+					.on('data', (chunk) => {
+						bodyParts.push(chunk)
+					})
+					.on('end', () => {
+						const buffer = Buffer.concat(bodyParts)
+						const contentType = this.getHeader('Content-Type')
+
+						if (!contentType) {
+							this.body = buffer
+							return resolve(this.body)
+						}
+
+						if (contentType.startsWith('text/') || contentType.startsWith('application/javascript') || contentType.startsWith('application/typescript') || contentType.startsWith('application/x-sh')) {
+							this.body = buffer.toString()
+						}
+
+						if (contentType.startsWith('application/json')) {
+							this.body = JSON.parse(buffer.toString())
+						}
+
+						if (!this.body) {
+							this.body = buffer
+						}
+
+						resolve(this.body)
+					})
+			})
+		}
+
+		return this.body
 	}
 
 	public getHttpVersion(): string {
