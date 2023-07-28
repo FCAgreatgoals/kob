@@ -1,8 +1,8 @@
-import { IncomingMessage, ServerResponse } from 'http'
+import { IncomingMessage, ServerResponse } from 'node:http'
 import Kob from './Kob'
 import Request from './Request'
 import Response from './Response'
-import util from 'util'
+import util from 'node:util'
 import HttpStatus from './HttpStatus'
 
 export default class Context {

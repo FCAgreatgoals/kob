@@ -1,11 +1,12 @@
-import { IncomingMessage } from 'http'
+import { IncomingMessage } from 'node:http'
 import { HttpMethod } from './types'
-import { Socket, isIP } from 'net'
+import { Socket, isIP } from 'node:net'
 import Base from './Base'
 import Context from './Context'
 import accepts, { Accepts } from 'accepts'
 import parseurl from 'parseurl'
-import { ParsedUrlQuery, decode } from 'querystring'
+import { ParsedUrlQuery } from 'node:querystring'
+import { URLSearchParams } from 'node:url'
 import contentType from 'content-type'
 import fresh from 'fresh'
 
@@ -104,8 +105,8 @@ export default class Request extends Base {
 		return parseurl(this.rawRequest)?.pathname ?? ''
 	}
 
-	public getQuery() {
-		return decode(this.getQueryString().toString())
+	public getQuery(): ParsedUrlQuery {
+		return Object.fromEntries(new URLSearchParams(this.getQueryString().toString()))
 	}
 
 	public getQueryString(): string | ParsedUrlQuery {
