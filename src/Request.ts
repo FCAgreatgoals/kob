@@ -1,5 +1,5 @@
 import { IncomingMessage } from 'node:http'
-import { Body, HttpMethod, MultipartField } from './types'
+import { Body, HttpMethod, MultipartFields } from './types'
 import { Socket, isIP } from 'node:net'
 import Base from './Base'
 import Context from './Context'
@@ -29,35 +29,35 @@ export default class Request extends Base {
 		return this.rawRequest
 	}
 
-	private parseMultipartFormData(request: IncomingMessage): Promise<Array<MultipartField>> {
+	private parseMultipartFormData(request: IncomingMessage): Promise<MultipartFields> {
 		const form = new IncomingForm()
-		const fields: MultipartField[] = []
+		const fields: MultipartFields = {}
 
 		form.on('field', (name: string, value: string): void => {
 			try {
-				fields.push({
+				fields[name] = {
 					type: 'json',
 					value: JSON.parse(value),
-				})
+				}
 			} catch (_) {
-				fields.push({
+				fields[name] = {
 					type: 'string',
 					value: value,
-				})
+				}
 			}
 		})
 
 		form.on('file', (name: string, file: File): void => {
 			const [filename, extension] = (file.originalFilename || 'unknown.unknown').split('.')
 
-			fields.push({
+			fields[name] = {
 				type: 'file',
 				mimetype: file.mimetype || 'unknown',
 				filename: filename,
 				extension: extension,
 				size: file.size,
 				tmpPath: file.filepath,
-			})
+			}
 		})
 
 		return new Promise((resolve, reject) => {

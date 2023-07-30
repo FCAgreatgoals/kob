@@ -23,24 +23,26 @@ export enum HttpMethod {
 	PATCH = 'PATCH'
 }
 
-export type MultipartField = {
-	type: 'string',
-	value: string
-} | {
-	type: 'json',
-	value: {
-		[key: string]: string
+export type MultipartFields = {
+	[key: string]: {
+		type: 'string',
+		value: string
+	} | {
+		type: 'json',
+		value: {
+			[key: string]: string
+		}
+	} | {
+		type: 'file',
+		mimetype: string,
+		filename: string,
+		extension: string,
+		size: number,
+		tmpPath: string
 	}
-} | {
-	type: 'file',
-	mimetype: string,
-	filename: string,
-	extension: string,
-	size: number,
-	tmpPath: string
 }
 
-export type Body = string | { [key: string]: any } | Array<MultipartField> | Stream | null
+export type Body = string | MultipartFields | { [key: string]: any } | Stream | null
 
 export type FileOptions = {
 	type?: 'attachment' | 'inline' | string | undefined,
