@@ -18,6 +18,8 @@ export default class Response extends Base {
 	private readonly rawResponse: ServerResponse
 	private body: Body
 	private _explicitNullBody: boolean
+	private _statusOrBodyAlteration: boolean
+	private _headersAlteration: boolean
 
 	constructor(context: Context, rawResponse: ServerResponse) {
 		super(context)
@@ -26,7 +28,17 @@ export default class Response extends Base {
 
 		this.body = null
 		this._explicitNullBody = false
+		this._statusOrBodyAlteration = false
+		this._headersAlteration = false
 	}
+
+	public getStatusOrBodyAlteration(): boolean {
+		return this._statusOrBodyAlteration
+	}
+
+	public getHeadersAlteration(): boolean {
+        return this._headersAlteration
+    }
 
 	public reply(...args: Array<any | BufferEncoding | (() => void)>): ServerResponse {
 		return this.rawResponse.end(...args.map(a => {
@@ -49,19 +61,19 @@ export default class Response extends Base {
 		if (this.getContext().getRequest().accepts('html')) {
 			url = escape(url)
 
-			this.setType('text/html; charset=utf-8')
+			this.setContentType('text/html; charset=utf-8')
 			this.setBody(`Redirection vers <a href="${url}">${url}</a>.`)
 
 			return
 		}
 
-		this.setType('text/plain; charset=utf-8')
+		this.setContentType('text/plain; charset=utf-8')
 		this.setBody(`Redirection vers ${url}`)
 	}
 
 	public attachFile(filename?: string, options?: FileOptions) {
 		if (filename) {
-			this.setType(extname(filename))
+			this.setContentType(extname(filename))
 		}
 
 		this.setHeader('Content-Disposition', contentDisposition(filename, options))
@@ -94,6 +106,8 @@ export default class Response extends Base {
 	public setHeader(name: string, value?: string | number | string[]): this {
 		if (this.isHeadersSent()) return this
 
+		this._headersAlteration = true
+
 		if (value) {
 			if (Array.isArray(value)) {
 				value = value.map(v => typeof v === 'string' ? v : String(v))
@@ -110,11 +124,16 @@ export default class Response extends Base {
 	public removeHeader(name: string): this {
 		if (this.isHeadersSent()) return this
 
+		this._headersAlteration = true
+
 		this.rawResponse.removeHeader(name)
 		return this
 	}
 
 	public flushHeaders(): this {
+		if (this.isHeadersSent()) return this
+
+		this._headersAlteration = true
 		this.rawResponse.flushHeaders()
 
 		return this
@@ -155,10 +174,11 @@ export default class Response extends Base {
 	public setBody(body: Body): this {
 		const original = this.body
 		this.body = body
+		this._statusOrBodyAlteration = true
 
 		if (body == null) {
 			if (!HttpStatus.isBodyEmpty(this.getStatus())) {
-				if (this.getType() === 'application/json') {
+				if (this.getContentType() === 'application/json') {
 					this.body = 'null'
 					return this
 				}
@@ -177,13 +197,9 @@ export default class Response extends Base {
 			return this
 		}
 
-		if (!this.getStatus()) {
-			this.setStatus(200)
-		}
-
 		if (typeof body === 'string') {
 			if (!this.hasHeader('Content-Type')) {
-				this.setType(/^\s*</.test(body) ? 'html' : 'text')
+				this.setContentType(/^\s*</.test(body) ? 'html' : 'text')
 			}
 
 			this.setLength(Buffer.byteLength(body))
@@ -193,7 +209,7 @@ export default class Response extends Base {
 
 		if (Buffer.isBuffer(body)) {
 			if (!this.hasHeader('Content-Type')) {
-				this.setType('bin')
+				this.setContentType('bin')
 			}
 
 			this.setLength(body.length)
@@ -213,24 +229,24 @@ export default class Response extends Base {
 			}
 
 			if (!this.hasHeader('Content-Type')) {
-				this.setType('bin')
+				this.setContentType('bin')
 			}
 
 			return this
 		}
 
-		this.removeHeader('Content-Length').setType('json')
+		this.removeHeader('Content-Length').setContentType('json')
 
 		return this
 	}
 
-	public getType(): string {
+	public getContentType(): string {
 		const type = this.getHeader('Content-Type')
 		if (!type) return ''
 		return type.split(';', 1)[0]
 	}
 
-	public setType(type: string): this {
+	public setContentType(type: string): this {
 		if (this.isHeadersSent()) return this
 
 		this.setHeader('Content-Type', type)
@@ -293,6 +309,8 @@ export default class Response extends Base {
 
 	public setStatus(code: HttpCode): this {
 		if (this.isHeadersSent()) return this
+
+		this._statusOrBodyAlteration = true
 
 		if (!HttpStatus.getMessage(code)) {
 			throw new Error(`Invalid status code : ${code}`)

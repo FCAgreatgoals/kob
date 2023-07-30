@@ -114,8 +114,6 @@ export default class Kob extends Emitter {
     private handleRequest(ctx: Context, fnMiddleware: Middleware) {
         const res = ctx.getResponse()
 
-        res.setStatus(404)
-
         const handleResponse = () => this.respond(ctx)
 
         onFinished(res.getRawResponse(), ctx.catchError.bind(ctx))
@@ -145,9 +143,18 @@ export default class Kob extends Emitter {
         const res =  ctx.getResponse()
         const code = res.getStatus()
 
-        // ignore body
+        if (
+            (res.getHeadersAlteration() && !res.getStatusOrBodyAlteration()) ||
+            (!res.getStatusOrBodyAlteration() && !res.getHeadersAlteration())
+        ) {
+            const errorCode = res.getHeadersAlteration() && !res.getStatusOrBodyAlteration() ? 500 : 404
+            res.setStatus(errorCode)
+            res.setBody(ctx.getRequest().getHttpVersionMajor() >= 2 ? String(errorCode) : (res.getMessage() || String(errorCode)))
+            res.reply(res.getBody())
+            return
+        }
+
         if (HttpStatus.isBodyEmpty(code)) {
-            // strip headers
             res.setBody(null)
             return res.reply()
         }
@@ -161,8 +168,7 @@ export default class Kob extends Emitter {
             return res.reply()
         }
 
-        // status body
-        if (res.getBody() == null) {
+        if (res.getBody() === null) {
             if (res.isExplicitNullBody()) {
                 res.removeHeader('Content-Type')
                     .removeHeader('Transfer-Encoding')
@@ -171,21 +177,16 @@ export default class Kob extends Emitter {
                 return res.reply()
             }
 
-            if (ctx.getRequest().getHttpVersionMajor() >= 2) {
-                res.setBody(String(code))
-            } else {
-                res.setBody(res.getMessage() || String(code))
-            }
+            res.setBody(ctx.getRequest().getHttpVersionMajor() >= 2 ? String(code) : (res.getMessage() || String(code)))
 
             if (!res.isHeadersSent()) {
-                res.setType('text')
+                res.setContentType('text')
                     .setLength(Buffer.byteLength(res.getBody() as Buffer))
             }
 
             return res.reply(res.getBody())
         }
 
-        // responses
         if (Buffer.isBuffer(res.getBody())) {
             return res.reply(res.getBody())
         }

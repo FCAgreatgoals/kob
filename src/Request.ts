@@ -1,5 +1,5 @@
 import { IncomingMessage } from 'node:http'
-import { Body, HttpMethod } from './types'
+import { Body, HttpMethod, MultipartField } from './types'
 import { Socket, isIP } from 'node:net'
 import Base from './Base'
 import Context from './Context'
@@ -9,6 +9,7 @@ import { ParsedUrlQuery } from 'node:querystring'
 import { URLSearchParams } from 'node:url'
 import contentType from 'content-type'
 import fresh from 'fresh'
+import { File, IncomingForm } from 'formidable'
 
 export default class Request extends Base {
 
@@ -28,6 +29,45 @@ export default class Request extends Base {
 		return this.rawRequest
 	}
 
+	private parseMultipartFormData(request: IncomingMessage): Promise<MultipartField[]> {
+		const form = new IncomingForm()
+		const fields: MultipartField[] = []
+
+		form.on('field', (name: string, value: string): void => {
+			try {
+				fields.push({
+					type: 'json',
+					value: JSON.parse(value),
+				})
+			} catch (_) {
+				fields.push({
+					type: 'string',
+					value: value,
+				})
+			}
+		})
+
+		form.on('file', (name: string, file: File): void => {
+			const [filename, extension] = (file.originalFilename || 'unknown.unknown').split('.')
+
+			fields.push({
+				type: 'file',
+				mimetype: file.mimetype || 'unknown',
+				filename: filename,
+				extension: extension,
+				size: file.size,
+				tmpPath: file.filepath,
+			})
+		})
+
+		return new Promise((resolve, reject) => {
+			form.parse(request, (err: any) => {
+				if (err) return reject(err)
+				resolve(fields)
+			})
+		})
+	}
+
 	public async getBody(): Promise<Body> {
 		if (this.body === null) {
 			return new Promise((resolve) => {
@@ -37,7 +77,7 @@ export default class Request extends Base {
 					.on('data', (chunk) => {
 						bodyParts.push(chunk)
 					})
-					.on('end', () => {
+					.on('end', async () => {
 						const buffer = Buffer.concat(bodyParts)
 						const contentType = this.getHeader('Content-Type')
 
@@ -52,6 +92,10 @@ export default class Request extends Base {
 
 						if (contentType.startsWith('application/json')) {
 							this.body = JSON.parse(buffer.toString())
+						}
+
+						if (contentType.startsWith('multipart/form-data')) {
+							this.body = await this.parseMultipartFormData(this.getRawRequest())
 						}
 
 						if (!this.body) {

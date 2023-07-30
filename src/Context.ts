@@ -56,7 +56,7 @@ export default class Context {
 
 		this.response
 			.setHeader(err.headers)
-			.setType('text')
+			.setContentType('text')
 
 		let statusCode = err.status || err.statusCode
 
