@@ -40,7 +40,7 @@ export type MultipartField = {
 	tmpPath: string
 }
 
-export type Body = string | { [key: string]: any } | MultipartField | Stream | null
+export type Body = string | { [key: string]: any } | Array<MultipartField> | Stream | null
 
 export type FileOptions = {
 	type?: 'attachment' | 'inline' | string | undefined,

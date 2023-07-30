@@ -29,7 +29,7 @@ export default class Request extends Base {
 		return this.rawRequest
 	}
 
-	private parseMultipartFormData(request: IncomingMessage): Promise<MultipartField[]> {
+	private parseMultipartFormData(request: IncomingMessage): Promise<Array<MultipartField>> {
 		const form = new IncomingForm()
 		const fields: MultipartField[] = []
 
