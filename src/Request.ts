@@ -69,17 +69,22 @@ export default class Request extends Base {
 	}
 
 	public async getBody(): Promise<Body> {
-		if (this.body === null) {
-			return new Promise((resolve) => {
+		if (this.body === null) return new Promise(async (resolve) => {
 				const bodyParts: Array<any> = []
+				const contentType = this.getHeader('Content-Type')
+
+				if (contentType && contentType.startsWith('multipart/form-data')) {
+					this.body = await this.parseMultipartFormData(this.getRawRequest())
+					resolve(this.body)
+					return
+				}
 
 				this.rawRequest
 					.on('data', (chunk) => {
 						bodyParts.push(chunk)
 					})
-					.on('end', async () => {
+					.on('end', () => {
 						const buffer = Buffer.concat(bodyParts)
-						const contentType = this.getHeader('Content-Type')
 
 						if (!contentType) {
 							this.body = buffer
@@ -94,10 +99,6 @@ export default class Request extends Base {
 							this.body = JSON.parse(buffer.toString())
 						}
 
-						if (contentType.startsWith('multipart/form-data')) {
-							this.body = await this.parseMultipartFormData(this.getRawRequest())
-						}
-
 						if (!this.body) {
 							this.body = buffer
 						}
@@ -105,7 +106,6 @@ export default class Request extends Base {
 						resolve(this.body)
 					})
 			})
-		}
 
 		return this.body
 	}
