@@ -1,6 +1,6 @@
 # Kob
 
-A lightweight and modern HTTP library for Node.js, inspired by Koa.js design patterns with middleware composition and context-based request/response handling.
+A lightweight HTTP library for Node.js, inspired by Koa.js design patterns with middleware composition and context-based request/response handling.
 
 ## Features
 
