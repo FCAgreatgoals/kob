@@ -1,5 +1,6 @@
 {
   "name": "@fca.gg/kob",
+  "displayName": "Kob",
   "version": "1.4.3",
   "description": "HTTP Library for Node.JS",
   "main": "lib/index.js",
@@ -47,13 +48,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@192.168.9.110:fca/kob.git",
-    "homepage": "https://git.fca.gg/fca/kob",
-    "bugs": "https://git.fca.gg/fca/kob/issues"
+    "url": "git@github.com:FCAgreatgoals/kob.git",
+    "homepage": "https://github.com/FCAgreatgoals/kob",
+    "bugs": "https://github.com/FCAgreatgoals/kob/issues"
   },
   "publishConfig": {
     "access": "restricted"
   },
   "author": "FCA <developpment@fca.gg> (https://fca.gg/)",
-  "license": "UNLICENSED"
+  "license": "AGPL-3.0"
 }
